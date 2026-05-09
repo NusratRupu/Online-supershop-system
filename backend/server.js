@@ -1,16 +1,36 @@
 const express = require('express');
-   require('dotenv').config();
+const mysql = require('mysql2'); // Importing the database driver
+require('dotenv').config();
 
-   const app = express();
-   // This tells the app to use the port from your .env file, or default to 5000
-   const PORT = process.env.PORT || 5000;
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-   // A simple test route so we can verify the server is breathing
-   app.get('/', (req, res) => {
-       res.send('Supershop Backend is alive!');
-   });
+// Middleware to parse JSON
+app.use(express.json());
 
-   // This actually starts the server
-   app.listen(PORT, () => {
-       console.log(`Server is running on port ${PORT}`);
-   });
+// 1. Create the Database Connection
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+});
+
+// 2. Test the Connection
+db.connect((err) => {
+    if (err) {
+        console.error('Database connection failed: ', err.message);
+        return;
+    }
+    console.log('Successfully connected to the XAMPP MySQL database!');
+});
+
+// Basic Test Route
+app.get('/', (req, res) => {
+    res.send('Supershop Backend is alive and connected to the database!');
+});
+
+// Start Server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
