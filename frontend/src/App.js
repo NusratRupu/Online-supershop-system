@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+Vimport React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // ==========================================
-// 1. HOME PAGE (Product Grid)
+// 1. HOME PAGE (Product Grid with REAL IMAGES)
 // ==========================================
 const Home = ({ products, addToCart }) => (
   <div>
@@ -16,7 +16,14 @@ const Home = ({ products, addToCart }) => (
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px', marginTop: '20px' }}>
         {products.map((product, index) => (
           <div key={index} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-            <div style={{ width: '100%', height: '180px', backgroundColor: '#eaeaea', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '4px', marginBottom: '15px', color: '#999' }}>[Image]</div>
+            
+            {/* HERE IS THE NEW IMAGE CODE */}
+            <img 
+              src={product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'} 
+              alt={product.name} 
+              style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '4px', marginBottom: '15px' }} 
+            />
+
             <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#888' }}>{product.category}</p>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333', height: '40px', overflow: 'hidden' }}>{product.name}</h3>
             <p style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#f85606', fontWeight: 'bold' }}>৳ {product.price.toLocaleString()}</p>
@@ -107,12 +114,28 @@ function AppContent() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const navigate = useNavigate();
 
+  // HERE ARE THE NEW PRODUCT DATA WITH REAL IMAGES
   const backupProducts = [
-    { id: 101, name: 'Samsung Galaxy S24 Ultra', description: 'Titanium frame, AI features.', price: 145000, category: 'Mobiles' },
-    { id: 102, name: 'Sony WH-1000XM5 Headphones', description: 'Noise cancellation.', price: 35000, category: 'Electronics' },
-    { id: 103, name: 'Nike Air Force 1', description: 'Classic white sneakers.', price: 8500, category: 'Fashion' },
-    { id: 104, name: 'MacBook Air M3', description: 'Apple M3 chip.', price: 135000, category: 'Computers' },
-    { id: 105, name: 'Philips Air Fryer XL', description: 'Fry with 90% less fat.', price: 12500, category: 'Home Appliances' }
+    { 
+      id: 101, name: 'Samsung Galaxy S24 Ultra', description: 'Titanium frame, AI features.', price: 145000, category: 'Mobiles',
+      image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500&q=80' 
+    },
+    { 
+      id: 102, name: 'Sony WH-1000XM5 Headphones', description: 'Noise cancellation.', price: 35000, category: 'Electronics',
+      image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&q=80' 
+    },
+    { 
+      id: 103, name: 'Nike Air Force 1', description: 'Classic white sneakers.', price: 8500, category: 'Fashion',
+      image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80' 
+    },
+    { 
+      id: 104, name: 'MacBook Air M3', description: 'Apple M3 chip.', price: 135000, category: 'Computers',
+      image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80' 
+    },
+    { 
+      id: 105, name: 'Philips Air Fryer XL', description: 'Fry with 90% less fat.', price: 12500, category: 'Home Appliances',
+      image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&q=80' 
+    }
   ];
 
   useEffect(() => {
@@ -123,7 +146,7 @@ function AppContent() {
 
   const addToCart = (product) => {
     setCart([...cart, product]);
-    setIsCartOpen(true); // Automatically open sidebar when adding an item
+    setIsCartOpen(true); 
   };
   const removeFromCart = (indexToRemove) => setCart(cart.filter((_, index) => index !== indexToRemove));
   const clearCart = () => setCart([]);
@@ -131,14 +154,14 @@ function AppContent() {
   const cartTotal = cart.reduce((total, item) => total + item.price, 0);
 
   const goToCheckout = () => {
-    setIsCartOpen(false); // Close sidebar
-    navigate('/checkout'); // Move to checkout page
+    setIsCartOpen(false); 
+    navigate('/checkout'); 
   };
 
   return (
     <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f4f4f4', minHeight: '100vh', position: 'relative' }}>
       
-      {/* GLOBAL NAVBAR (Search is back!) */}
+      {/* GLOBAL NAVBAR */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', backgroundColor: '#f85606', color: 'white', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link to="/" style={{ color: 'white', textDecoration: 'none' }}><h1 style={{ margin: 0, fontSize: '24px', letterSpacing: '1px' }}>ONLINE SUPERSHOP</h1></Link>
         
@@ -151,7 +174,7 @@ function AppContent() {
         </div>
       </nav>
 
-      {/* THE RESTORED SIDEBAR CART */}
+      {/* THE SIDEBAR CART */}
       {isCartOpen && (
         <div style={{ position: 'fixed', top: 0, right: 0, width: '350px', height: '100vh', backgroundColor: 'white', boxShadow: '-5px 0 15px rgba(0,0,0,0.2)', zIndex: 1000, padding: '20px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
