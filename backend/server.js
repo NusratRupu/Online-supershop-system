@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2');
-const bcrypt = require('bcrypt'); // The security package you just installed
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // Added for Login tokens
 require('dotenv').config();
 
 const app = express();
@@ -8,7 +9,9 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
-// Create the Database Connection
+// ==========================================
+// 1. LIVE DATABASE CONNECTION
+// ==========================================
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -21,35 +24,30 @@ db.connect((err) => {
         console.error('Database connection failed: ', err.message);
         return;
     }
-    console.log('Successfully connected to the XAMPP MySQL database!');
+    console.log('Successfully connected to the LIVE XAMPP MySQL database!');
 });
 
 // ==========================================
-// USER REGISTRATION ROUTE
+// 2. USER REGISTRATION ROUTE
 // ==========================================
 app.post('/register', async (req, res) => {
     try {
-        // Grab the data sent by the user
         const { name, email, password, role } = req.body;
 
-        // 1. Encrypt the password (hashing)
+        // Encrypt the password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        // 2. Save the user to the XAMPP database
-        // We use ? to prevent SQL injection attacks
+        // Save to real database
         const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-        
-        // If they don't specify a role, default to 'buyer'
         const userRole = role || 'buyer'; 
-        const values = [name, email, hashedPassword, userRole];
-
-        db.query(sql, values, (err, result) => {
+        
+        db.query(sql, [name, email, hashedPassword, userRole], (err, result) => {
             if (err) {
                 console.error("Database error:", err);
                 return res.status(500).json({ error: "Email might already exist or database error." });
             }
-            res.status(201).json({ message: "User registered successfully!" });
+            res.status(201).json({ message: "User registered successfully in the live database!" });
         });
 
     } catch (error) {
@@ -57,14 +55,60 @@ app.post('/register', async (req, res) => {
         res.status(500).json({ error: "Internal server error" });
     }
 });
-// ==========================================
 
-// Basic Test Route
-app.get('/', (req, res) => {
-    res.send('Supershop Backend is alive and connected to the database!');
+// ==========================================
+// 3. USER LOGIN ROUTE (NEW)
+// ==========================================
+app.post('/login', (req, res) => {
+    try {
+        const { email, password } = req.body;
+
+        // 1. Find user in the database by email
+        const sql = "SELECT * FROM users WHERE email = ?";
+        db.query(sql, [email], async (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: "Database error" });
+            }
+            
+            // If the array is empty, the email doesn't exist
+            if (results.length === 0) {
+                return res.status(401).json({ error: "Invalid email or password" });
+            }
+
+            const user = results[0]; // Grab the specific user row
+
+            // 2. Compare the typed password with the encrypted password in the DB
+            const isMatch = await bcrypt.compare(password, user.password);
+            
+            if (!isMatch) {
+                return res.status(401).json({ error: "Invalid email or password" });
+            }
+
+            // 3. Generate the JWT "VIP Pass" Token
+            // Using a fallback secret string if one isn't in your .env file yet
+            const jwtSecret = process.env.JWT_SECRET || "supershop_super_secret_key_123";
+            const token = jwt.sign(
+                { id: user.id, role: user.role }, 
+                jwtSecret, 
+                { expiresIn: "2h" } // Token expires in 2 hours for security
+            );
+
+            res.status(200).json({ 
+                message: "Login successful!",
+                token: token,
+                user: { id: user.id, name: user.name, role: user.role }
+            });
+        });
+
+    } catch (error) {
+        console.error("Server error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
 
+// ==========================================
 // Start Server
+// ==========================================
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
