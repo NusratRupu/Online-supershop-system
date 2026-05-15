@@ -1,9 +1,9 @@
-Vimport React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 // ==========================================
-// 1. HOME PAGE (Product Grid with REAL IMAGES)
+// 1. HOME PAGE
 // ==========================================
 const Home = ({ products, addToCart }) => (
   <div>
@@ -17,7 +17,7 @@ const Home = ({ products, addToCart }) => (
         {products.map((product, index) => (
           <div key={index} style={{ backgroundColor: 'white', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
             
-            {/* HERE IS THE NEW IMAGE CODE */}
+            {/* THIS IS THE MAGIC IMAGE TAG */}
             <img 
               src={product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'} 
               alt={product.name} 
@@ -26,7 +26,7 @@ const Home = ({ products, addToCart }) => (
 
             <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#888' }}>{product.category}</p>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333', height: '40px', overflow: 'hidden' }}>{product.name}</h3>
-            <p style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#f85606', fontWeight: 'bold' }}>৳ {product.price.toLocaleString()}</p>
+            <p style={{ margin: '0 0 15px 0', fontSize: '20px', color: '#f85606', fontWeight: 'bold' }}>৳ {product.price ? product.price.toLocaleString() : '0'}</p>
             <button onClick={() => addToCart(product)} style={{ width: '100%', padding: '10px', backgroundColor: '#f85606', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Add to Cart</button>
           </div>
         ))}
@@ -36,11 +36,11 @@ const Home = ({ products, addToCart }) => (
 );
 
 // ==========================================
-// 2. CHECKOUT PAGE (Delivery Details)
+// 2. CHECKOUT PAGE
 // ==========================================
 const Checkout = ({ cart, clearCart }) => {
   const navigate = useNavigate();
-  const cartTotal = cart.reduce((total, item) => total + item.price, 0);
+  const cartTotal = cart.reduce((total, item) => total + (item.price || 0), 0);
 
   const handleCheckout = (e) => {
     e.preventDefault();
@@ -81,7 +81,7 @@ const Checkout = ({ cart, clearCart }) => {
 };
 
 // ==========================================
-// 3. SUCCESS PAGE (After Purchase)
+// 3. SUCCESS PAGE
 // ==========================================
 const OrderSuccess = () => (
   <div style={{ textAlign: 'center', padding: '100px 20px' }}>
@@ -106,7 +106,7 @@ const Dashboard = () => (
 );
 
 // ==========================================
-// MAIN APP CONTENT (Contains State & Sidebar)
+// MAIN APP CONTENT
 // ==========================================
 function AppContent() {
   const [products, setProducts] = useState([]);
@@ -114,7 +114,6 @@ function AppContent() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const navigate = useNavigate();
 
-  // HERE ARE THE NEW PRODUCT DATA WITH REAL IMAGES
   const backupProducts = [
     { 
       id: 101, name: 'Samsung Galaxy S24 Ultra', description: 'Titanium frame, AI features.', price: 145000, category: 'Mobiles',
@@ -151,7 +150,7 @@ function AppContent() {
   const removeFromCart = (indexToRemove) => setCart(cart.filter((_, index) => index !== indexToRemove));
   const clearCart = () => setCart([]);
   
-  const cartTotal = cart.reduce((total, item) => total + item.price, 0);
+  const cartTotal = cart.reduce((total, item) => total + (item.price || 0), 0);
 
   const goToCheckout = () => {
     setIsCartOpen(false); 
@@ -161,10 +160,8 @@ function AppContent() {
   return (
     <div style={{ fontFamily: 'Arial, sans-serif', backgroundColor: '#f4f4f4', minHeight: '100vh', position: 'relative' }}>
       
-      {/* GLOBAL NAVBAR */}
       <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 40px', backgroundColor: '#f85606', color: 'white', position: 'sticky', top: 0, zIndex: 100 }}>
         <Link to="/" style={{ color: 'white', textDecoration: 'none' }}><h1 style={{ margin: 0, fontSize: '24px', letterSpacing: '1px' }}>ONLINE SUPERSHOP</h1></Link>
-        
         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
           <input type="text" placeholder="Search in SuperShop..." style={{ padding: '8px 15px', borderRadius: '4px', border: 'none', width: '300px' }} />
           <Link to="/dashboard" style={navButton}>Dashboard</Link>
@@ -174,7 +171,6 @@ function AppContent() {
         </div>
       </nav>
 
-      {/* THE SIDEBAR CART */}
       {isCartOpen && (
         <div style={{ position: 'fixed', top: 0, right: 0, width: '350px', height: '100vh', backgroundColor: 'white', boxShadow: '-5px 0 15px rgba(0,0,0,0.2)', zIndex: 1000, padding: '20px', display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginBottom: '20px' }}>
@@ -188,7 +184,7 @@ function AppContent() {
                 <div key={index} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', backgroundColor: '#f9f9f9', padding: '10px', borderRadius: '4px' }}>
                   <div>
                     <h4 style={{ margin: '0 0 5px 0', fontSize: '14px' }}>{item.name}</h4>
-                    <p style={{ margin: 0, color: '#f85606', fontWeight: 'bold' }}>৳ {item.price.toLocaleString()}</p>
+                    <p style={{ margin: 0, color: '#f85606', fontWeight: 'bold' }}>৳ {item.price}</p>
                   </div>
                   <button onClick={() => removeFromCart(index)} style={{ backgroundColor: '#ff4d4f', color: 'white', border: 'none', padding: '5px 10px', borderRadius: '4px', cursor: 'pointer' }}>Delete</button>
                 </div>
@@ -203,7 +199,6 @@ function AppContent() {
         </div>
       )}
 
-      {/* PAGE ROUTER */}
       <Routes>
         <Route path="/" element={<Home products={products} addToCart={addToCart} />} />
         <Route path="/checkout" element={<Checkout cart={cart} clearCart={clearCart} />} />
@@ -215,7 +210,6 @@ function AppContent() {
   );
 }
 
-// Wrap the App in the Router so navigation works perfectly
 export default function App() {
   return (
     <Router>
@@ -224,7 +218,6 @@ export default function App() {
   );
 }
 
-// Quick CSS Objects
 const inputStyle = { padding: '12px', borderRadius: '4px', border: '1px solid #ccc', fontSize: '14px', width: '100%', boxSizing: 'border-box' };
 const navButton = { padding: '8px 20px', border: 'none', borderRadius: '4px', backgroundColor: 'white', color: '#f85606', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'none', display: 'flex', alignItems: 'center' };
 const statCard = { flex: 1, backgroundColor: 'white', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', textAlign: 'center' };
