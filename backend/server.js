@@ -2,11 +2,15 @@ const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
+const cors = require('cors'); // 1. Import CORS up here
 require('dotenv').config();
 
-const app = express();
+const app = express(); // 2. App is created HERE
+
+app.use(cors());       // 3. NOW we can use CORS!
 app.use(express.json());
 
+// ... the rest of your database connection code stays exactly the same
 // ==========================================
 // 1. CONNECT TO XAMPP
 // ==========================================
