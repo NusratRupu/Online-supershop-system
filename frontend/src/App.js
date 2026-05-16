@@ -114,26 +114,71 @@ function AppContent() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const navigate = useNavigate();
 
-  const backupProducts = [
+ const backupProducts = [
+    // --- TECH & GADGETS ---
     { 
-      id: 101, name: 'Samsung Galaxy S24 Ultra', description: 'Titanium frame, AI features.', price: 145000, category: 'Mobiles',
+      id: 101, name: 'Samsung Galaxy S24 Ultra', description: 'Titanium frame, 256GB, AI features.', price: 145000, category: 'Mobiles',
       image: 'https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=500&q=80' 
     },
     { 
-      id: 102, name: 'Sony WH-1000XM5 Headphones', description: 'Noise cancellation.', price: 35000, category: 'Electronics',
+      id: 102, name: 'Sony WH-1000XM5', description: 'Industry leading noise cancellation.', price: 35000, category: 'Electronics',
       image: 'https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=500&q=80' 
     },
     { 
-      id: 103, name: 'Nike Air Force 1', description: 'Classic white sneakers.', price: 8500, category: 'Fashion',
-      image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80' 
-    },
-    { 
-      id: 104, name: 'MacBook Air M3', description: 'Apple M3 chip.', price: 135000, category: 'Computers',
+      id: 103, name: 'MacBook Air M3', description: 'Apple M3 chip, 8GB RAM, 256GB SSD.', price: 135000, category: 'Computers',
       image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80' 
     },
     { 
-      id: 105, name: 'Philips Air Fryer XL', description: 'Fry with 90% less fat.', price: 12500, category: 'Home Appliances',
+      id: 104, name: 'Logitech G Pro X Wireless', description: 'Ultra-lightweight gaming mouse.', price: 12500, category: 'Accessories',
+      image: 'https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=500&q=80' 
+    },
+    { 
+      id: 105, name: 'Apple Watch Series 9', description: 'Advanced health features, GPS.', price: 45000, category: 'Wearables',
+      image: 'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=500&q=80' 
+    },
+
+    // --- FASHION & LIFESTYLE ---
+    { 
+      id: 106, name: 'Nike Air Force 1', description: 'Classic white leather sneakers.', price: 8500, category: 'Fashion',
+      image: 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?w=500&q=80' 
+    },
+    { 
+      id: 107, name: 'Men’s Vintage Denim Jacket', description: 'Classic blue wash, slim fit.', price: 2200, category: 'Fashion',
+      image: 'https://images.unsplash.com/photo-1495105787522-5334e3ffa0eb?w=500&q=80' 
+    },
+    { 
+      id: 108, name: 'Polarized Aviator Sunglasses', description: 'UV400 protection, metal frame.', price: 1500, category: 'Accessories',
+      image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=500&q=80' 
+    },
+    { 
+      id: 109, name: 'Travel Duffle Backpack', description: 'Waterproof, 40L capacity.', price: 3200, category: 'Travel',
+      image: 'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80' 
+    },
+    { 
+      id: 110, name: 'Casio G-Shock', description: 'Shock resistant, water resistant.', price: 6500, category: 'Watches',
+      image: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=500&q=80' 
+    },
+
+    // --- HOME & BEAUTY ---
+    { 
+      id: 111, name: 'Philips Air Fryer XL', description: 'Fry with 90% less fat.', price: 12500, category: 'Home Appliances',
       image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500&q=80' 
+    },
+    { 
+      id: 112, name: 'Vitamin C Face Serum', description: 'Brightening and anti-aging skincare.', price: 850, category: 'Beauty',
+      image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500&q=80' 
+    },
+    { 
+      id: 113, name: 'Ergonomic Office Chair', description: 'Lumbar support, breathable mesh.', price: 8500, category: 'Furniture',
+      image: 'https://images.unsplash.com/photo-1505843490538-5133c6c7d0e1?w=500&q=80' 
+    },
+    { 
+      id: 114, name: 'Stainless Steel Water Bottle', description: 'Keeps drinks cold for 24 hours.', price: 1200, category: 'Home & Kitchen',
+      image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=500&q=80' 
+    },
+    { 
+      id: 115, name: 'LED Desk Lamp', description: 'Dimmable, eye-caring reading light.', price: 1800, category: 'Home Decor',
+      image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=500&q=80' 
     }
   ];
 
