@@ -1,14 +1,13 @@
 const express = require('express');
 const mysql = require('mysql2');
-const bcrypt = require('bcrypt'); // The security package you just installed
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); 
 require('dotenv').config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
 app.use(express.json());
 
-// Create the Database Connection
+// 1. CONNECT TO XAMPP
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -17,54 +16,47 @@ const db = mysql.createConnection({
 });
 
 db.connect((err) => {
-    if (err) {
-        console.error('Database connection failed: ', err.message);
-        return;
-    }
-    console.log('Successfully connected to the XAMPP MySQL database!');
+    if (err) throw err;
+    console.log('Connected to LIVE Database!');
 });
 
-// ==========================================
-// USER REGISTRATION ROUTE
-// ==========================================
+// 2. REGISTER A USER (Add to VIP List)
 app.post('/register', async (req, res) => {
-    try {
-        // Grab the data sent by the user
-        const { name, email, password, role } = req.body;
-
-        // 1. Encrypt the password (hashing)
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-        // 2. Save the user to the XAMPP database
-        // We use ? to prevent SQL injection attacks
-        const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-        
-        // If they don't specify a role, default to 'buyer'
-        const userRole = role || 'buyer'; 
-        const values = [name, email, hashedPassword, userRole];
-
-        db.query(sql, values, (err, result) => {
-            if (err) {
-                console.error("Database error:", err);
-                return res.status(500).json({ error: "Email might already exist or database error." });
-            }
-            res.status(201).json({ message: "User registered successfully!" });
-        });
-
-    } catch (error) {
-        console.error("Server error:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-});
-// ==========================================
-
-// Basic Test Route
-app.get('/', (req, res) => {
-    res.send('Supershop Backend is alive and connected to the database!');
+    const { name, email, password, role } = req.body;
+    
+    // Scramble the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Save to database
+    const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+    db.query(sql, [name, email, hashedPassword, role || 'buyer'], (err, result) => {
+        if (err) return res.status(500).json({ error: "Email already exists!" });
+        res.status(201).json({ message: "User registered successfully!" });
+    });
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+// 3. LOGIN A USER (Give the Wristband)
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
+
+    // Look up the email
+    db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
+        if (results.length === 0) return res.status(401).json({ error: "Wrong email!" });
+
+        const user = results[0];
+
+        // Check if password matches
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return res.status(401).json({ error: "Wrong password!" });
+
+        // Generate the JWT Wristband
+        const token = jwt.sign({ id: user.id }, "my_secret_key", { expiresIn: "2h" });
+
+        res.status(200).json({ message: "Login successful!", token: token });
+    });
+});
+
+// START SERVER
+app.listen(process.env.PORT || 5000, () => {
+    console.log(`Server running on port 5000`);
 });
