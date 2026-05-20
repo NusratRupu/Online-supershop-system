@@ -4,10 +4,21 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
 const cors = require('cors'); 
 require('dotenv').config();
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
 app.use(cors());       
 app.use(express.json());
+// Serve the uploads folder so React can see the images
+app.use('/uploads', express.static('uploads'));
+
+// Configure exactly where and how images are saved
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, 'uploads/'),
+    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+});
+const upload = multer({ storage });
 
 // ==========================================
 // 1. CONNECT TO DATABASE
@@ -95,12 +106,15 @@ const verifySeller = (req, res, next) => {
 // ==========================================
 // 4. PRODUCT ROUTES
 // ==========================================
-app.post('/products', verifyToken, verifySeller, (req, res) => {
+// UPGRADED ADD PRODUCT ROUTE (With Image Upload)
+app.post('/products', verifyToken, verifySeller, upload.single('image'), (req, res) => {
     const { name, description, price, category, stock_quantity } = req.body;
-    const sql = "INSERT INTO products (seller_id, name, description, price, category, stock_quantity) VALUES (?, ?, ?, ?, ?, ?)";
-    db.query(sql, [req.user.id, name, description, price, category, stock_quantity], (err, result) => {
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : null; // Save the path
+
+    const sql = "INSERT INTO products (seller_id, name, description, price, category, stock_quantity, image) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    db.query(sql, [req.user.id, name, description, price, category, stock_quantity, imageUrl], (err, result) => {
         if (err) return res.status(500).json({ error: "Database error." });
-        res.status(201).json({ message: "Product added!" });
+        res.status(201).json({ message: "Product added successfully!" });
     });
 });
 
