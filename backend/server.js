@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
+<<<<<<< HEAD
 const cors = require('cors'); 
 require('dotenv').config();
 
@@ -11,6 +12,18 @@ app.use(express.json());
 
 // ==========================================
 // 1. DATABASE CONNECTION
+=======
+const cors = require('cors'); // 1. Import CORS up here
+require('dotenv').config();
+
+const app = express(); // 2. App is created HERE
+
+app.use(cors());       // 3. NOW we can use CORS!
+app.use(express.json());
+
+// ==========================================
+// 1. CONNECT TO XAMPP
+>>>>>>> b0756472ff90890ff7b4f34424f36c57d296f149
 // ==========================================
 const db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
@@ -28,7 +41,11 @@ db.connect((err) => {
 });
 
 // ==========================================
+<<<<<<< HEAD
 // 2. AUTHENTICATION ROUTES
+=======
+// 2. REGISTER A USER (Add to VIP List)
+>>>>>>> b0756472ff90890ff7b4f34424f36c57d296f149
 // ==========================================
 app.post('/register', async (req, res) => {
     const { name, email, password, role } = req.body;
@@ -48,6 +65,12 @@ app.post('/register', async (req, res) => {
     }
 });
 
+<<<<<<< HEAD
+=======
+// ==========================================
+// 3. LOGIN A USER (Give the Wristband)
+// ==========================================
+>>>>>>> b0756472ff90890ff7b4f34424f36c57d296f149
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
     db.query("SELECT * FROM users WHERE email = ?", [email], async (err, results) => {
@@ -104,6 +127,52 @@ app.get('/products', (req, res) => {
     });
 });
 
+<<<<<<< HEAD
+=======
+// ==========================================
+// 4. THE BOUNCER (JWT Middleware)
+// ==========================================
+const verifyToken = (req, res, next) => {
+    // Check if they brought a wristband in the request header
+    const authHeader = req.header("Authorization");
+    
+    if (!authHeader) {
+        return res.status(401).json({ error: "Access Denied! No token provided." });
+    }
+
+    try {
+        // The token usually comes in as "Bearer <long_token_string>"
+        // We split it to just get the token part
+        const token = authHeader.split(" ")[1]; 
+
+        // Verify it using the EXACT SAME secret key from your login route
+        const verified = jwt.verify(token, "my_secret_key");
+        
+        // Attach the user's decoded ID to the request so we know who they are
+        req.user = verified; 
+        
+        // Let them through the door!
+        next(); 
+    } catch (error) {
+        res.status(400).json({ error: "Invalid or expired token!" });
+    }
+};
+
+// ==========================================
+// 5. A PROTECTED VIP ROOM (Test Route)
+// ==========================================
+// Notice how we put 'verifyToken' in the middle. The bouncer checks them first!
+app.get('/seller-dashboard', verifyToken, (req, res) => {
+    res.status(200).json({
+        message: "Welcome to the protected Seller Dashboard!",
+        your_user_details: req.user 
+    });
+});
+
+// ==========================================
+// START SERVER
+// ==========================================
+>>>>>>> b0756472ff90890ff7b4f34424f36c57d296f149
 app.listen(process.env.PORT || 5000, () => {
     console.log(`🚀 Backend Server running on port 5000`);
 });
