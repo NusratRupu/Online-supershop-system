@@ -24,7 +24,7 @@ const upload = multer({ storage });
 // 1. CONNECT TO DATABASE
 // ==========================================
 const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
+    host: process.env.DB_HOST || '127.0.0.1',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'supershop_db' // Hardcoded fallback just in case!
@@ -43,25 +43,36 @@ db.connect((err) => {
 // ==========================================
 
 // REGISTER A USER
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
     const { name, email, password, role } = req.body;
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
-        
-        db.query(sql, [name, email, hashedPassword, role || 'buyer'], (err, result) => {
-            if (err) {
-                console.log("🔴 Registration Error:", err.sqlMessage || err);
-                if (err.code === 'ER_DUP_ENTRY') {
-                    return res.status(409).json({ error: "Email already exists!" });
-                }
-                return res.status(500).json({ error: "Server error during registration." });
-            }
-            res.status(201).json({ message: "User registered successfully!" });
-        });
-    } catch (error) {
-        res.status(500).json({ error: "Server error during registration." });
+    if (!name || !email || !password) {
+        return res.status(400).json({ error: "Name, email, and password are required." });
     }
+
+    db.query("SELECT id FROM users WHERE email = ?", [email], async (err, results) => {
+        if (err) {
+            console.error('🔴 Registration email check error:', err);
+            return res.status(500).json({ error: "Database error during registration." });
+        }
+        if (results.length > 0) {
+            return res.status(409).json({ error: "Email already exists!" });
+        }
+
+        try {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const sql = "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)";
+            db.query(sql, [name, email, hashedPassword, role || 'buyer'], (err2, result) => {
+                if (err2) {
+                    console.error('🔴 Registration insert error:', err2);
+                    return res.status(500).json({ error: "Database error during registration." });
+                }
+                res.status(201).json({ message: "User registered successfully!" });
+            });
+        } catch (error) {
+            console.error('🔴 Registration hashing error:', error);
+            res.status(500).json({ error: "Server error during registration." });
+        }
+    });
 });
 
 // LOGIN A USER
