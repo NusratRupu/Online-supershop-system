@@ -51,8 +51,11 @@ app.post('/register', async (req, res) => {
         
         db.query(sql, [name, email, hashedPassword, role || 'buyer'], (err, result) => {
             if (err) {
-                console.log("🔴 Registration Error:", err.sqlMessage);
-                return res.status(500).json({ error: "Email already exists!" });
+                console.log("🔴 Registration Error:", err.sqlMessage || err);
+                if (err.code === 'ER_DUP_ENTRY') {
+                    return res.status(409).json({ error: "Email already exists!" });
+                }
+                return res.status(500).json({ error: "Server error during registration." });
             }
             res.status(201).json({ message: "User registered successfully!" });
         });
