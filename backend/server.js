@@ -32,8 +32,8 @@ const dbConfig = {
 
 const DB_NAME = process.env.DB_NAME || 'supershop_db';
 
-// Create connection pool for better reliability
-const db = mysql.createConnection(dbConfig);
+// `db` will be assigned once the main DB connection is established
+let db = null;
 
 // Helper function to initialize database
 function initializeDatabase() {
@@ -130,27 +130,32 @@ function connectMainDatabase() {
             setTimeout(connectMainDatabase, 5000); // Retry after 5 seconds
             return;
         }
-        
-        // Replace global db connection
-        Object.keys(newConnection).forEach(key => {
-            db[key] = newConnection[key];
+        // Assign the successfully connected connection to the module-scoped `db`
+        db = newConnection;
+
+        // Attach error handler to the live connection
+        db.on('error', (err) => {
+            console.error('🔴 Database Error:', err.message);
+            if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ER_CON_COUNT_ERROR' || err.code === 'ECONNREFUSED') {
+                console.log('⏳ Attempting to reconnect...');
+                setTimeout(initializeDatabase, 5000);
+            }
         });
-        
+
         console.log('🟢 Connected to MySQL Database:', DB_NAME);
+
+        // Start the server only after DB is ready
+        const port = process.env.PORT || 5000;
+        app.listen(port, () => {
+            console.log(`🚀 Backend Server running on port ${port}`);
+        });
     });
 }
 
 // Start initialization
 initializeDatabase();
 
-// Handle connection errors and auto-reconnect
-db.on('error', (err) => {
-    console.error('🔴 Database Error:', err.message);
-    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ER_CON_COUNT_ERROR' || err.code === 'ECONNREFUSED') {
-        console.log('⏳ Attempting to reconnect...');
-        setTimeout(initializeDatabase, 5000);
-    }
-});
+// Note: DB errors are handled after the main connection is established in `connectMainDatabase()`
 
 // ==========================================
 // 2. AUTHENTICATION ROUTES
@@ -276,6 +281,4 @@ app.get('/seller-dashboard', verifyToken, (req, res) => {
 // ==========================================
 // 6. START SERVER
 // ==========================================
-app.listen(process.env.PORT || 5000, () => {
-    console.log(`🚀 Backend Server running on port 5000`);
-});
+// Server is started after DB connection is established in `connectMainDatabase()`
