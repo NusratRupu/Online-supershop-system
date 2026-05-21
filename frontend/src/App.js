@@ -99,10 +99,10 @@ const Home = ({ products, addToCart }) => (
               
               {/* IMAGE FIX: Pulls from backend uploads folder OR Unsplash */}
               <img 
-                src={product.image ? `http://localhost:5000${product.image}` : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'} 
-                alt={product.name} 
-                style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '4px', marginBottom: '15px' }} 
-              />
+  src={product.image ? (product.image.startsWith('http') ? product.image : `http://localhost:5000${product.image}`) : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80'} 
+  alt={product.name} 
+  style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '4px', marginBottom: '15px' }} 
+/>
 
               <p style={{ margin: '0 0 5px 0', fontSize: '12px', color: '#888' }}>{product.category}</p>
               <h3 style={{ margin: '0 0 10px 0', fontSize: '16px', color: '#333', height: '40px', overflow: 'hidden' }}>{product.name}</h3>

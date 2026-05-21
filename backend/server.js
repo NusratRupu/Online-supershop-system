@@ -21,21 +21,135 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // ==========================================
-// 1. CONNECT TO DATABASE
+// 1. CONNECT TO DATABASE WITH AUTO-INITIALIZATION
 // ==========================================
-const db = mysql.createConnection({
+const dbConfig = {
     host: process.env.DB_HOST || '127.0.0.1',
+    port: process.env.DB_PORT || 3306,
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'supershop_db' // Hardcoded fallback just in case!
-});
+};
 
-db.connect((err) => {
-    if (err) {
-        console.error('🔴 Database Connection Failed:', err);
-        return;
+const DB_NAME = process.env.DB_NAME || 'supershop_db';
+
+// Create connection pool for better reliability
+const db = mysql.createConnection(dbConfig);
+
+// Helper function to initialize database
+function initializeDatabase() {
+    const connection = mysql.createConnection(dbConfig);
+    
+    connection.connect((err) => {
+        if (err) {
+            console.error('🔴 Initial Connection Failed:', err.message);
+            setTimeout(initializeDatabase, 5000); // Retry after 5 seconds
+            return;
+        }
+        
+        // Step 1: Create database if it doesn't exist
+        connection.query(`CREATE DATABASE IF NOT EXISTS ${DB_NAME}`, (err) => {
+            if (err) {
+                console.error('🔴 Failed to create database:', err.message);
+                connection.end();
+                setTimeout(initializeDatabase, 5000);
+                return;
+            }
+            
+            console.log('✅ Database created or already exists');
+            
+            // Step 2: Select the database
+            connection.query(`USE ${DB_NAME}`, (err) => {
+                if (err) {
+                    console.error('🔴 Failed to select database:', err.message);
+                    connection.end();
+                    setTimeout(initializeDatabase, 5000);
+                    return;
+                }
+                
+                // Step 3: Create tables if they don't exist
+                const createTablesSQL = `
+                    CREATE TABLE IF NOT EXISTS users (
+                        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                        name VARCHAR(255) NOT NULL,
+                        email VARCHAR(255) NOT NULL UNIQUE,
+                        password VARCHAR(255) NOT NULL,
+                        role VARCHAR(50) NOT NULL DEFAULT 'buyer',
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                    
+                    CREATE TABLE IF NOT EXISTS products (
+                        id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                        seller_id INT UNSIGNED NOT NULL,
+                        name VARCHAR(255) NOT NULL,
+                        description TEXT,
+                        price DECIMAL(10, 2) NOT NULL,
+                        category VARCHAR(100),
+                        stock_quantity INT DEFAULT 0,
+                        image VARCHAR(255),
+                        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        PRIMARY KEY (id),
+                        FOREIGN KEY (seller_id) REFERENCES users(id) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+                `;
+                
+                // Execute each CREATE TABLE statement
+                const statements = createTablesSQL.split(';').filter(stmt => stmt.trim());
+                let completed = 0;
+                
+                statements.forEach((statement) => {
+                    connection.query(statement, (err) => {
+                        if (err) {
+                            console.error('🔴 Table creation error:', err.message);
+                        }
+                        completed++;
+                        if (completed === statements.length) {
+                            console.log('✅ All tables initialized successfully');
+                            connection.end();
+                            connectMainDatabase();
+                        }
+                    });
+                });
+            });
+        });
+    });
+}
+
+// Main database connection
+function connectMainDatabase() {
+    const mainConfig = {
+        ...dbConfig,
+        database: DB_NAME
+    };
+    
+    const newConnection = mysql.createConnection(mainConfig);
+    
+    newConnection.connect((err) => {
+        if (err) {
+            console.error('🔴 Main Database Connection Failed:', err.message);
+            setTimeout(connectMainDatabase, 5000); // Retry after 5 seconds
+            return;
+        }
+        
+        // Replace global db connection
+        Object.keys(newConnection).forEach(key => {
+            db[key] = newConnection[key];
+        });
+        
+        console.log('🟢 Connected to MySQL Database:', DB_NAME);
+    });
+}
+
+// Start initialization
+initializeDatabase();
+
+// Handle connection errors and auto-reconnect
+db.on('error', (err) => {
+    console.error('🔴 Database Error:', err.message);
+    if (err.code === 'PROTOCOL_CONNECTION_LOST' || err.code === 'ER_CON_COUNT_ERROR' || err.code === 'ECONNREFUSED') {
+        console.log('⏳ Attempting to reconnect...');
+        setTimeout(initializeDatabase, 5000);
     }
-    console.log('🟢 Connected to LIVE MySQL Database (supershop_db)!');
 });
 
 // ==========================================
